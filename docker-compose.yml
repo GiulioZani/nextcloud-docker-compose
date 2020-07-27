@@ -1,4 +1,4 @@
-version: '3.2'
+version: '3.7'
 
 services:
   db:
@@ -11,19 +11,21 @@ services:
       - MYSQL_ROOT_PASSWORD=toor
     env_file:
       - db.env
-
+    container_name: db
+    
   redis:
     image: redis:alpine
     restart: always
 
   app:
+    container_name: nextcloud
     image: nextcloud:apache
     restart: always
     volumes:
-            - /mnt/MAXTOR/nextcloud/files:/var/www/html
+            - /mnt/MAXTOR/nextcloud/:/var/www/html
     environment:
-      - VIRTUAL_HOST=www.nextcloud.bluesk.space
-      - LETSENCRYPT_HOST=www.nextcloud.bluesk.space
+      - VIRTUAL_HOST=www.bluesk.space
+      - LETSENCRYPT_HOST=www.bluesk.space
       - LETSENCRYPT_EMAIL=giulio.zani@gmail.com
       - MYSQL_HOST=db
       - REDIS_HOST=redis
@@ -35,18 +37,20 @@ services:
     networks:
       - proxy-tier
       - default
-
+    
   cron:
+    container_name: cron
     image: nextcloud:apache
     restart: always
     volumes:
-            - /mnt/MAXTOR/nextcloud/files:/var/www/html
+            - /mnt/MAXTOR/nextcloud/:/var/www/html
     entrypoint: /cron.sh
     depends_on:
       - db
       - redis
 
   proxy:
+    container_name: proxy
     build: ./proxy
     restart: always
     ports:
@@ -63,6 +67,7 @@ services:
       - proxy-tier
 
   letsencrypt-companion:
+    container_name: letsencrypt
     image: jrcs/letsencrypt-nginx-proxy-companion
     restart: always
     volumes:
@@ -76,11 +81,10 @@ services:
       - proxy
 
 volumes:
-  nextcloud:
-  db:
   certs:
   vhost.d:
   html:
+  db:
 
 networks:
   proxy-tier:
